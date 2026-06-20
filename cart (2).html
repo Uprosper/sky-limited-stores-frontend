@@ -1,0 +1,284 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Cart — Sky Limited Stores</title>
+  <link rel="icon" href="ChatGPT Image Jun 17, 2026, 09_10_01 PM.png" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://googleapis.com" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top navigation -->
+  <header class="topbar">
+    <a href="index.html"><img src="images/logo.svg" alt="Sky Limited Stores" class="logo"></a>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html">Home</a>
+      <a href="index.html#shop">Shop</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Login</a>
+      <a href="cart.html" class="nav-cart active">Cart (0)</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">☰</button>
+  </header>
+
+  <section class="section">
+    <div class="section-eyebrow">Checkout</div>
+    <h2 class="section-title">Your Cart</h2>
+    <p class="section-sub">Review your items, enter your shipping details, and pay securely with Paystack.</p>
+
+    <div class="contact-grid">
+
+      <!-- Cart items -->
+      <div>
+        <div id="cartItems"></div>
+        <div id="cartTotalRow" class="value-item" style="margin-top: 20px; display: none;">
+          <h3>Total</h3>
+          <p id="cartTotal" style="font-family: var(--font-display); font-size: 22px; color: var(--green);"></p>
+        </div>
+      </div>
+
+      <!-- Shipping & payment form -->
+      <div class="form-wrap" style="margin:0;" id="checkoutForm">
+        <h3 style="font-family: var(--font-display); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--yellow); margin-bottom: 20px;">Shipping Details</h3>
+
+        <form id="orderForm">
+          <div class="form-field">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" name="fullName" placeholder="Jane Doe" required>
+          </div>
+          <div class="form-field">
+            <label for="address">Street Address</label>
+            <input type="text" id="address" name="address" placeholder="123 Main St" required>
+          </div>
+          <div class="form-field">
+            <label for="city">City</label>
+            <input type="text" id="city" name="city" placeholder="Lagos" required>
+          </div>
+          <div class="form-field">
+            <label for="state">State</label>
+            <input type="text" id="state" name="state" placeholder="Lagos State">
+          </div>
+          <div class="form-field">
+            <label for="country">Country</label>
+            <input type="text" id="country" name="country" placeholder="Nigeria" required>
+          </div>
+          <div class="form-field">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="+2348012345678">
+          </div>
+
+          <div class="form-field">
+            <label>Payment Method</label>
+            <div style="margin-top: 8px; font-family: var(--font-body); font-size: 14px; color: var(--text);">
+              Pay securely with Paystack (card, bank transfer, or USSD)
+            </div>
+            <input type="hidden" name="paymentMethod" value="paystack">
+          </div>
+
+          <button type="submit" class="form-submit" id="checkoutBtn">Place Order</button>
+          <p id="formStatus" style="margin-top: 12px; margin-bottom: 0; font-size: 13px;"></p>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <img src="images/logo.svg" alt="Sky Limited Stores" class="logo">
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#shop">Shop</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Login</a>
+    </div>
+    <div class="footer-copy">&copy; 2026 Sky Limited Stores. All rights reserved.</div>
+  </footer>
+
+  <script>
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('open');
+    });
+
+    // Show "My Orders" instead of "Login" once the customer is signed in
+    (function setupAuthNav() {
+      if (!localStorage.getItem('token')) return;
+      document.querySelectorAll('a[href="login.html"]').forEach(link => {
+        link.textContent = 'My Orders';
+        link.setAttribute('href', 'orders.html');
+      });
+    })();
+
+    // ---- Configuration ----
+    const API_BASE_URL = 'https://sky-limited-stores-backend.onrender.com/api';
+    const MINIMUM_ORDER_AMOUNT = 10000; 
+
+    const cartItemsEl = document.getElementById('cartItems');
+    const cartTotalRow = document.getElementById('cartTotalRow');
+    const cartTotalEl = document.getElementById('cartTotal');
+    const checkoutForm = document.getElementById('checkoutForm');
+    const formStatus = document.getElementById('formStatus');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+
+    function getCart() {
+      return JSON.parse(localStorage.getItem('cart') || '[]');
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem('cart', JSON.stringify(cart));
+      updateCartCount();
+    }
+
+    function updateCartCount() {
+      const cart = getCart();
+      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+      document.querySelectorAll('.nav-cart').forEach(el => {
+        el.textContent = `Cart (${count})`;
+      });
+    }
+
+    function renderCart() {
+      const cart = getCart();
+
+      if (!cart.length) {
+        cartItemsEl.innerHTML = '<p class="section-sub">Your cart is empty. <a href="index.html#shop" style="color: var(--green);">Browse products</a> to add something.</p>';
+        cartTotalRow.style.display = 'none';
+        checkoutForm.style.display = 'none';
+        return;
+      }
+
+      checkoutForm.style.display = '';
+
+      cartItemsEl.innerHTML = cart.map((item, i) => `
+        <div class="product-card" style="display:flex; align-items:center; gap:16px; padding:16px; margin-bottom:12px;">
+          <div style="flex:1;">
+            <div class="product-name">${item.name}</div>
+            <div class="product-meta">₦${item.price.toFixed(2)} each</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="add-btn qty-btn" data-i="${i}" data-dir="-1">&minus;</button>
+            <span style="min-width:24px; text-align:center;">${item.quantity}</span>
+            <button class="add-btn qty-btn" data-i="${i}" data-dir="1">+</button>
+          </div>
+          <div style="font-family: var(--font-display); color: var(--green); min-width:70px; text-align:right;">
+            ₦${(item.price * item.quantity).toFixed(2)}
+          </div>
+          <button class="add-btn remove-btn" data-i="${i}" style="border-color:#ff6b6b; color:#ff6b6b;">Remove</button>
+        </div>
+      `).join('');
+
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      cartTotalRow.style.display = '';
+      cartTotalEl.textContent = `₦${total.toFixed(2)}`;
+
+      // Check minimum threshold limit rules
+      if (total < MINIMUM_ORDER_AMOUNT) {
+        checkoutBtn.disabled = true;
+        checkoutBtn.style.opacity = '0.5';
+        checkoutBtn.style.cursor = 'not-allowed';
+        const missingAmount = MINIMUM_ORDER_AMOUNT - total;
+        formStatus.style.color = '#ff6b6b';
+        formStatus.textContent = `Minimum order is ₦10,000. Please add ₦${missingAmount.toFixed(2)} more value to checkout.`;
+      } else {
+        checkoutBtn.disabled = false;
+        checkoutBtn.style.opacity = '1';
+        checkoutBtn.style.cursor = 'pointer';
+        formStatus.textContent = '';
+      }
+
+      // Quantity adjustments
+      cartItemsEl.querySelectorAll('.qty-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = parseInt(btn.dataset.i, 10);
+          const dir = parseInt(btn.dataset.dir, 10);
+          const cart = getCart();
+          cart[i].quantity += dir;
+          if (cart[i].quantity < 1) cart[i].quantity = 1;
+          saveCart(cart);
+          renderCart();
+        });
+      });
+
+      // Remove row item from view
+      cartItemsEl.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = parseInt(btn.dataset.i, 10);
+          const cart = getCart();
+          cart.splice(i, 1);
+          saveCart(cart);
+          renderCart();
+        });
+      });
+    }
+
+    // Submit form schema and send package to Paystack API
+    document.getElementById('orderForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        formStatus.style.color = '#ff6b6b';
+        formStatus.textContent = 'Please login first to place an order.';
+        setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+        return;
+      }
+
+           const cart = getCart();
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      if (total < MINIMUM_ORDER_AMOUNT) return; 
+
+      formStatus.style.color = 'var(--yellow)';
+      formStatus.textContent = 'Creating order request...';
+      checkoutBtn.disabled = true;
+
+      const shippingAddress = {
+        fullName: document.getElementById('fullName').value,
+        address: document.getElementById('address').value,
+        city: document.getElementById('city').value,
+        state: document.getElementById('state').value,
+        country: document.getElementById('country').value,
+        phone: document.getElementById('phone').value,
+      };
+
+      try {
+        // 🌟 Fixed missing backticks here:
+        const res = await fetch(`${API_BASE_URL}/orders`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ items: cart, shippingAddress })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          formStatus.style.color = '#ff6b6b';
+          formStatus.textContent = data.error || 'Failed to place order.';
+          checkoutBtn.disabled = false;
+          return;
+        }
+
+        localStorage.removeItem('cart');
+        formStatus.style.color = 'var(--green)';
+        formStatus.textContent = 'Redirecting you to Paystack...';
+        window.location.href = data.payment.authorizationUrl;
+      } catch (err) {
+        formStatus.style.color = '#ff6b6b';
+        formStatus.textContent = 'Could not reach server.';
+        checkoutBtn.disabled = false;
+      }
+    });
+
+    renderCart();
+    updateCartCount();
+  </script>
+</body>
+</html>

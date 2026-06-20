@@ -1,0 +1,715 @@
+/* ===========================
+   Sky Limited Stores — styles
+   Palette: near-black bg, deep blue panels, neon green + yellow accents
+   =========================== */
+
+:root {
+  --bg: #0A0E14;
+  --panel: #0F1B3D;
+  --panel-light: #16234A;
+  --green: #00E89E;
+  --yellow: #FFE600;
+  --text: #E6ECF5;
+  --text-dim: #8B95A8;
+  --border: #1F2C52;
+
+  --font-display: 'Space Mono', 'Courier New', monospace;
+  --font-heading: 'Poppins', 'Inter', -apple-system, sans-serif;
+  --font-body: 'Inter', -apple-system, 'Segoe UI', Arial, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Focus visibility */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+/* ===========================
+   Top bar / nav
+   =========================== */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 5%;
+  background: rgba(10, 14, 20, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  height: 42px;
+  width: auto;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.nav-links a {
+  color: var(--text-dim);
+  transition: color 0.2s ease;
+  position: relative;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  color: var(--green);
+}
+
+.nav-cart {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid var(--green);
+  color: var(--green);
+  padding: 8px 16px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nav-cart:hover {
+  background: var(--green);
+  color: var(--bg);
+}
+
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--green);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* ===========================
+   Hero
+   =========================== */
+
+.hero {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ===========================
+   Section layout helpers
+   =========================== */
+
+.section {
+  padding: 64px 5%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.section-eyebrow {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.section-sub {
+  color: var(--text-dim);
+  max-width: 560px;
+  margin-bottom: 40px;
+}
+
+/* ===========================
+   Category filter pills
+   =========================== */
+
+.filter-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 36px;
+}
+
+.filter-pill {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-dim);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-pill:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.filter-pill.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--bg);
+}
+
+/* ===========================
+   Product grid
+   =========================== */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 28px;
+}
+
+.product-card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 0 0 20px;
+  overflow: hidden;
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+
+.product-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--panel), var(--panel)) padding-box,
+    linear-gradient(135deg, var(--green), var(--yellow), var(--green)) border-box;
+  border: 1px solid transparent;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+}
+
+.product-card:hover::before {
+  opacity: 1;
+}
+
+.product-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(135deg, var(--panel-light), var(--bg));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.product-image svg {
+  width: 56%;
+  height: 56%;
+  stroke: var(--text-dim);
+}
+
+.product-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: var(--yellow);
+  color: var(--bg);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  z-index: 2;
+}
+
+.product-info {
+  padding: 18px 18px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.product-name {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.product-meta {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 14px;
+}
+
+.product-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.product-price {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.product-price-old {
+  font-size: 13px;
+  color: var(--text-dim);
+  text-decoration: line-through;
+  margin-left: 8px;
+}
+
+.add-btn {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border: 1px solid var(--green);
+  color: var(--green);
+  background: transparent;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.add-btn:hover {
+  background: var(--green);
+  color: var(--bg);
+}
+
+/* ===========================
+   Value strip
+   =========================== */
+
+.value-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin: 0 5%;
+}
+
+.value-item {
+  background: var(--panel);
+  padding: 32px 24px;
+}
+
+.value-item h3 {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 8px;
+}
+
+.value-item p {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+/* ===========================
+   Auth pages (login / signup) — gradient backdrop
+   =========================== */
+
+.auth-section {
+  position: relative;
+  min-height: calc(100vh - 73px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 85%, rgba(0, 232, 158, 0.35), transparent 50%),
+    radial-gradient(ellipse at 85% 70%, rgba(40, 90, 220, 0.32), transparent 50%),
+    linear-gradient(180deg, #05070c 0%, #060911 40%, #060911 70%, #05070c 100%);
+  padding: 64px 5%;
+}
+
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+}
+
+.auth-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: clamp(32px, 6vw, 44px);
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.auth-sub {
+  color: var(--text-dim);
+  font-size: 15px;
+  margin-bottom: 36px;
+}
+
+.auth-sub a {
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.4);
+}
+
+.auth-field {
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.auth-field label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 10px;
+}
+
+.auth-field input {
+  width: 100%;
+  background: #aab0b6;
+  border: none;
+  border-radius: 16px;
+  color: #2b2f33;
+  padding: 18px 20px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-field input::placeholder {
+  color: #41454a;
+}
+
+.auth-field input:focus {
+  outline: none;
+  background: #b8bdc2;
+  box-shadow: 0 0 0 2px rgba(0, 232, 158, 0.6);
+}
+
+.auth-submit {
+  width: 100%;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-transform: lowercase;
+  padding: 18px;
+  border-radius: 16px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.auth-submit:active {
+  transform: scale(0.99);
+}
+
+/* Solid dark variant — used on signup */
+.auth-submit--solid {
+  background: #0c1410;
+  color: #fff;
+  border: none;
+}
+
+.auth-submit--solid:hover {
+  opacity: 0.85;
+}
+
+/* Outlined variant — used on login */
+.auth-submit--outline {
+  background: transparent;
+  color: #fff;
+  border: 1.5px solid #fff;
+}
+
+.auth-submit--outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+
+
+
+.form-wrap {
+  max-width: 440px;
+  margin: 0 auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 40px;
+}
+
+.form-wrap .section-title {
+  text-align: center;
+}
+
+.form-wrap .section-sub {
+  text-align: center;
+  margin: 0 auto 32px;
+}
+
+.form-field {
+  margin-bottom: 20px;
+}
+
+.form-field label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.form-field input,
+.form-field textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.form-field input:focus,
+.form-field textarea:focus {
+  border-color: var(--green);
+  outline: none;
+}
+
+.form-field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.form-submit {
+  width: 100%;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: var(--green);
+  color: var(--bg);
+  border: none;
+  padding: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  margin-top: 8px;
+}
+
+.form-submit:hover {
+  background: var(--yellow);
+}
+
+.form-footnote {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 20px;
+}
+
+.form-footnote a {
+  color: var(--green);
+}
+
+/* ===========================
+   Contact info layout
+   =========================== */
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.contact-details h3 {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin-bottom: 6px;
+  margin-top: 28px;
+}
+
+.contact-details h3:first-child {
+  margin-top: 0;
+}
+
+.contact-details p {
+  color: var(--text-dim);
+}
+
+.contact-details a {
+  color: var(--green);
+}
+
+/* ===========================
+   Footer
+   =========================== */
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 5%;
+  margin-top: 64px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.site-footer .logo {
+  height: 32px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 24px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.footer-links a:hover {
+  color: var(--green);
+}
+
+.footer-copy {
+  font-size: 12px;
+  color: var(--text-dim);
+  width: 100%;
+  text-align: center;
+  margin-top: 16px;
+  font-family: var(--font-display);
+  letter-spacing: 1px;
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+
+@media (max-width: 860px) {
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .nav-links {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px 5%;
+    gap: 20px;
+    display: none;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .nav-toggle {
+    display: block;
+  }
+
+  .nav-cart {
+    display: none;
+  }
+
+  .nav-links.open .nav-cart {
+    display: flex;
+  }
+
+  .form-wrap {
+    padding: 28px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

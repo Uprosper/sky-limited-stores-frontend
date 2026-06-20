@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Sky Limited Stores</title>
+  <link rel="icon"    href="ChatGPT Image Jun 17, 2026, 09_10_01 PM.png"   type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top navigation -->
+  <header class="topbar">
+    <a href="index.html"><img src="images/logo.svg" alt="Sky Limited Stores" class="logo"></a>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html">Home</a>
+      <a href="index.html#shop">Shop</a>
+      <a href="contact.html" class="active">Contact</a>
+      <a href="login.html">Login</a>
+      <a href="cart.html" class="nav-cart">Cart (0)</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
+  </header>
+
+  <section class="section">
+    <div class="section-eyebrow">Get In Touch</div>
+    <h2 class="section-title">Contact Us</h2>
+    <p class="section-sub">Questions about an order, a product, or anything else? Send a message or reach us directly below.</p>
+
+    <div class="contact-grid">
+
+      <!-- Contact form -->
+      <div class="form-wrap" style="margin:0;">
+        <form id="contactForm">
+          <div class="form-field">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" placeholder="Jane Doe" required>
+          </div>
+          <div class="form-field">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" required>
+          </div>
+          <div class="form-field">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" placeholder="How can we help?" required></textarea>
+          </div>
+          <button type="submit" class="form-submit">Send Message</button>
+          <p id="formStatus" style="margin-top: 12px; margin-bottom: 0; font-size: 13px;"></p>
+        </form>
+      </div>
+
+      <!-- Dummy contact details -->
+      <div class="contact-details">
+        <h3>Customer Support</h3>
+        <p><a href="mailto:support@skylimitedstores.com">support@skylimitedstores.com</a></p>
+
+        <h3>Phone</h3>
+        <p><a href="tel:+15551234567">+1 (555) 123-4567</a></p>
+        <p>Mon–Fri, 9am–6pm (GMT)</p>
+
+        <h3>Address</h3>
+        <p>Sky Limited Stores<br>
+        123 Commerce Avenue<br>
+        Suite 400<br>
+        Lagos, Nigeria</p>
+
+        <h3>Follow Us</h3>
+        <p>
+          <a href="#">Instagram</a> &nbsp;·&nbsp;
+          <a href="#">Facebook</a> &nbsp;·&nbsp;
+          <a href="#">TikTok</a>
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <img src="images/logo.svg" alt="Sky Limited Stores" class="logo">
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#shop">Shop</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Login</a>
+    </div>
+    <div class="footer-copy">&copy; 2026 Sky Limited Stores. All rights reserved.</div>
+  </footer>
+
+  <script>
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('open');
+    });
+
+    // Show "My Orders" instead of "Login" once the customer is signed in
+    (function setupAuthNav() {
+      if (!localStorage.getItem('token')) return;
+      document.querySelectorAll('a[href="login.html"]').forEach(link => {
+        link.textContent = 'My Orders';
+        link.setAttribute('href', 'orders.html');
+      });
+    })();
+
+    // Update cart counter in nav based on items saved in this browser
+    (function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+      document.querySelectorAll('.nav-cart').forEach(el => {
+        el.textContent = `Cart (${count})`;
+      });
+    })();
+
+    // ---- Configuration ----
+    // While testing on your own computer, the backend runs at this address.
+    // Once you deploy the backend online, change this to that URL instead.
+    const API_BASE_URL = 'https://sky-limited-stores-backend.onrender.com/api';
+
+    const form = document.getElementById('contactForm');
+    const statusEl = document.getElementById('formStatus');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const message = document.getElementById('message').value.trim();
+
+      statusEl.textContent = '';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/contact`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, message }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          statusEl.textContent = data.error || 'Something went wrong. Please try again.';
+          statusEl.style.color = '#ff6b6b';
+          return;
+        }
+
+        statusEl.textContent = data.message || "Thanks for reaching out — we'll get back to you soon.";
+        statusEl.style.color = 'var(--green)';
+        form.reset();
+      } catch (err) {
+        statusEl.textContent = 'Could not reach the server. Is the backend running?';
+        statusEl.style.color = '#ff6b6b';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send Message';
+      }
+    });
+  </script>
+
+</body>
+</html>

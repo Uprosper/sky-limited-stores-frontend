@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmation — Sky Limited Stores</title>
+  <link rel="icon"    href="ChatGPT Image Jun 17, 2026, 09_10_01 PM.png"   type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top navigation -->
+  <header class="topbar">
+    <a href="index.html"><img src="images/logo.svg" alt="Sky Limited Stores" class="logo"></a>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html">Home</a>
+      <a href="index.html#shop">Shop</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Login</a>
+      <a href="cart.html" class="nav-cart">Cart (0)</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
+  </header>
+
+  <section class="auth-section">
+    <div class="auth-card" id="statusCard">
+      <h1 class="auth-title">Checking payment&hellip;</h1>
+      <p class="auth-sub" id="statusMessage">Hold on while we confirm your payment with Paystack.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <img src="images/logo.svg" alt="Sky Limited Stores" class="logo">
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#shop">Shop</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Login</a>
+    </div>
+    <div class="footer-copy">&copy; 2026 Sky Limited Stores. All rights reserved.</div>
+  </footer>
+
+  <script>
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('open');
+    });
+
+    // Show "My Orders" instead of "Login" once the customer is signed in
+    (function setupAuthNav() {
+      if (!localStorage.getItem('token')) return;
+      document.querySelectorAll('a[href="login.html"]').forEach(link => {
+        link.textContent = 'My Orders';
+        link.setAttribute('href', 'orders.html');
+      });
+    })();
+
+    // Update cart counter in nav based on items saved in this browser
+    (function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+      document.querySelectorAll('.nav-cart').forEach(el => {
+        el.textContent = `Cart (${count})`;
+      });
+    })();
+
+    // ---- Configuration ----
+    // Replace with your deployed backend URL, e.g. https://sky-backend.onrender.com/api
+    const API_BASE_URL = 'https://sky-limited-stores-backend.onrender.com/api';
+
+    const titleEl = document.querySelector('#statusCard .auth-title');
+    const messageEl = document.getElementById('statusMessage');
+
+    async function verifyPayment() {
+      const params = new URLSearchParams(window.location.search);
+      const reference = params.get('reference') || params.get('trxref');
+      const token = localStorage.getItem('token');
+
+      if (!reference) {
+        titleEl.textContent = 'No order found';
+        messageEl.textContent = "We couldn't find a payment reference in this link.";
+        return;
+      }
+
+      if (!token) {
+        titleEl.textContent = 'Please log in';
+        messageEl.textContent = 'Log in to view your order confirmation.';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/orders/verify/${reference}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          titleEl.textContent = 'Something went wrong';
+          messageEl.textContent = data.error || 'Could not verify your payment.';
+          return;
+        }
+
+        const order = data.order;
+
+        if (order.paymentStatus === 'paid') {
+          titleEl.textContent = 'Payment successful!';
+          messageEl.innerHTML = `Thanks for your order. Order total: ₦${order.totalAmount.toFixed(2)}. A confirmation has been recorded. <br><br><a href="orders.html" style="color: var(--green); text-decoration: underline;">Track your order &rarr;</a>`;
+        } else if (order.paymentStatus === 'failed') {
+          titleEl.textContent = 'Payment failed';
+          messageEl.textContent = 'Your payment did not go through. Please try again from your cart.';
+        } else {
+          titleEl.textContent = 'Payment pending';
+          messageEl.textContent = "We're still waiting for confirmation. This page will not auto-refresh — please check back shortly.";
+        }
+      } catch (err) {
+        titleEl.textContent = 'Connection error';
+        messageEl.textContent = 'Could not reach the server to verify your payment.';
+      }
+    }
+
+    verifyPayment();
+  </script>
+
+</body>
+</html>
