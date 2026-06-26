@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -7,8 +7,41 @@
   <link rel="icon" href="ChatGPT Image Jun 17, 2026, 09_10_01 PM.png" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://googleapis.com" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ── Avatar / profile chip in nav ── */
+    .nav-avatar {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--text, #e0e0e0);
+      font-family: var(--font-body, 'Inter', sans-serif);
+      font-size: 14px;
+      font-weight: 500;
+      transition: opacity .2s;
+    }
+    .nav-avatar:hover { opacity: .8; }
+    .nav-avatar img,
+    .nav-avatar .avatar-initials {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--green, #00ff9d);
+      flex-shrink: 0;
+    }
+    .nav-avatar .avatar-initials {
+      background: var(--green, #00ff9d);
+      color: #0a0e27;
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
 </head>
 <body>
 
@@ -19,10 +52,10 @@
       <a href="index.html">Home</a>
       <a href="index.html#shop">Shop</a>
       <a href="contact.html">Contact</a>
-      <a href="login.html">Login</a>
+      <a href="login.html" id="authNavLink">Login</a>
       <a href="cart.html" class="nav-cart active">Cart (0)</a>
     </nav>
-    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">☰</button>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
   </header>
 
   <section class="section">
@@ -100,47 +133,72 @@
   </footer>
 
   <script>
-    const navToggle = document.getElementById('navToggle');
-    const navLinks = document.getElementById('navLinks');
-    navToggle.addEventListener('click', () => {
-      navLinks.classList.toggle('open');
+    // ── Mobile nav toggle ──────────────────────────────────────────────────────
+    document.getElementById('navToggle').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open');
     });
 
-    // Show "My Orders" instead of "Login" once the customer is signed in
+    // ── HARD LOGIN GATE — redirect immediately if not signed in ───────────────
+    if (!localStorage.getItem('token')) {
+      // Save where they were headed so we can return them after login
+      sessionStorage.setItem('redirectAfterLogin', 'cart.html');
+      window.location.href = 'login.html';
+    }
+
+    // ── Auth nav: replace "Login" link with avatar chip ───────────────────────
     (function setupAuthNav() {
-      if (!localStorage.getItem('token')) return;
-      document.querySelectorAll('a[href="login.html"]').forEach(link => {
-        link.textContent = 'My Orders';
-        link.setAttribute('href', 'orders.html');
-      });
+      const token = localStorage.getItem('token');
+      const authLink = document.getElementById('authNavLink');
+      if (!token || !authLink) return;
+
+      let user = {};
+      try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch (_) {}
+
+      const name     = user.name  || 'Account';
+      const email    = user.email || '';
+      const initials = name.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+      const avatarUrl = `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?d=404&s=64`;
+
+      const chip = document.createElement('a');
+      chip.href  = 'orders.html';
+      chip.className = 'nav-avatar';
+      chip.title = `Signed in as ${name}`;
+
+      const img  = document.createElement('img');
+      img.src    = avatarUrl;
+      img.alt    = initials;
+      img.onerror = function () {
+        const bubble = document.createElement('span');
+        bubble.className   = 'avatar-initials';
+        bubble.textContent = initials;
+        chip.replaceChild(bubble, img);
+      };
+
+      chip.appendChild(img);
+      chip.appendChild(document.createTextNode(name.split(' ')[0]));
+      authLink.replaceWith(chip);
     })();
 
-    // ---- Configuration ----
-    const API_BASE_URL = 'https://sky-limited-stores-backend.onrender.com/api';
-    const MINIMUM_ORDER_AMOUNT = 10000; 
+    // Tiny MD5 (for Gravatar)
+    function md5(s){function L(k,d){return(k<<d)|(k>>>(32-d))}function K(G,k){var I,d,F,H,x;F=(G&2147483648);H=(k&2147483648);I=(G&1073741824);d=(k&1073741824);x=(G&1073741823)+(k&1073741823);if(I&d){return(x^2147483648^F^H)}if(I|d){if(x&1073741824){return(x^3221225472^F^H)}else{return(x^1073741824^F^H)}}else{return(x^F^H)}}function r(d,F,k,I,G,H,x){d=K(d,K(K((F&k)|(~F&I),G),x));return K(L(d,H),F)}function q(d,F,k,I,G,H,x){d=K(d,K(K((F&I)|(k&~I),G),x));return K(L(d,H),F)}function p(d,F,k,I,G,H,x){d=K(d,K(K(F^k^I,G),x));return K(L(d,H),F)}function n(d,F,k,I,G,H,x){d=K(d,K(K(k^(F|~I),G),x));return K(L(d,H),F)}function u(G){var F="",k="",H,d;for(d=0;d<=3;d++){H=(G>>>(d*8))&255;k="0"+H.toString(16);F+=k.substr(k.length-2,2)}return F}var e=[],b,J,j,A,C,B,D,E,v,g,h,f,o=[];s=function(G){var F,k=G.length,H=k+8,d=(H-(H%64))/64,I=(d+1)*16,x=Array(I-1),m=0,a=0;while(a<k){F=(a-(a%4))/4;m=a%4*8;x[F]=(x[F]|(G.charCodeAt(a)<<m));a++}F=(a-(a%4))/4;x[F]=(x[F]|(128<<(a%4*8)));x[I-2]=k<<3;x[I-1]=k>>>29;return x}(s);b=1732584193;J=4023233417;j=2562383102;A=271733878;for(C=0;C<s.length;C+=16){B=b;D=J;E=j;v=A;b=r(b,J,j,A,s[C],7,3614090360);A=r(A,b,J,j,s[C+1],12,3905402710);j=r(j,A,b,J,s[C+2],17,606105819);J=r(J,j,A,b,s[C+3],22,3250441966);b=r(b,J,j,A,s[C+4],7,4118548399);A=r(A,b,J,j,s[C+5],12,1200080426);j=r(j,A,b,J,s[C+6],17,2821735955);J=r(J,j,A,b,s[C+7],22,4249261313);b=r(b,J,j,A,s[C+8],7,1770035416);A=r(A,b,J,j,s[C+9],12,2336552879);j=r(j,A,b,J,s[C+10],17,4294925233);J=r(J,j,A,b,s[C+11],22,2304563134);b=r(b,J,j,A,s[C+12],7,1804603682);A=r(A,b,J,j,s[C+13],12,4254626195);j=r(j,A,b,J,s[C+14],17,2792965006);J=r(J,j,A,b,s[C+15],22,1236535329);b=q(b,J,j,A,s[C+1],5,4129170786);A=q(A,b,J,j,s[C+6],9,3225465664);j=q(j,A,b,J,s[C+11],14,643717713);J=q(J,j,A,b,s[C],20,3921069994);b=q(b,J,j,A,s[C+5],5,3593408605);A=q(A,b,J,j,s[C+10],9,38016083);j=q(j,A,b,J,s[C+15],14,3634488961);J=q(J,j,A,b,s[C+4],20,3889429448);b=q(b,J,j,A,s[C+9],5,568446438);A=q(A,b,J,j,s[C+14],9,3275163606);j=q(j,A,b,J,s[C+3],14,4107603335);J=q(J,j,A,b,s[C+8],20,1163531501);b=q(b,J,j,A,s[C+13],5,2850285829);A=q(A,b,J,j,s[C+2],9,4243563512);j=q(j,A,b,J,s[C+7],14,1735328473);J=q(J,j,A,b,s[C+12],20,2368359562);b=p(b,J,j,A,s[C+5],4,4294588738);A=p(A,b,J,j,s[C+8],11,2272392833);j=p(j,A,b,J,s[C+11],16,1839030562);J=p(J,j,A,b,s[C+14],23,4259657740);b=p(b,J,j,A,s[C+1],4,2763975236);A=p(A,b,J,j,s[C+4],11,1272893353);j=p(j,A,b,J,s[C+7],16,4139469664);J=p(J,j,A,b,s[C+10],23,3200236656);b=p(b,J,j,A,s[C+13],4,681279174);A=p(A,b,J,j,s[C],11,3936430074);j=p(j,A,b,J,s[C+3],16,3572445317);J=p(J,j,A,b,s[C+6],23,76029189);b=p(b,J,j,A,s[C+9],4,3654602809);A=p(A,b,J,j,s[C+12],11,3873151461);j=p(j,A,b,J,s[C+15],16,530742520);J=p(J,j,A,b,s[C+2],23,3299628645);b=n(b,J,j,A,s[C],6,4096336452);A=n(A,b,J,j,s[C+7],10,1126891415);j=n(j,A,b,J,s[C+14],15,2878612391);J=n(J,j,A,b,s[C+5],21,4237533241);b=n(b,J,j,A,s[C+12],6,1700485571);A=n(A,b,J,j,s[C+3],10,2399980690);j=n(j,A,b,J,s[C+10],15,4293915773);J=n(J,j,A,b,s[C+1],21,2240044497);b=n(b,J,j,A,s[C+8],6,1873313359);A=n(A,b,J,j,s[C+15],10,4264355552);j=n(j,A,b,J,s[C+6],15,2734768916);J=n(J,j,A,b,s[C+13],21,1309151649);b=n(b,J,j,A,s[C+4],6,4149444226);A=n(A,b,J,j,s[C+11],10,3174756917);j=n(j,A,b,J,s[C+2],15,718787259);J=n(J,j,A,b,s[C+9],21,3951481745);b=K(b,B);J=K(J,D);j=K(j,E);A=K(A,v)}return(u(b)+u(J)+u(j)+u(A)).toLowerCase()}
 
-    const cartItemsEl = document.getElementById('cartItems');
+    // ── Config ────────────────────────────────────────────────────────────────
+    const API_BASE_URL       = 'https://sky-limited-stores-backend.onrender.com/api';
+    const MINIMUM_ORDER_AMOUNT = 10000;
+
+    const cartItemsEl  = document.getElementById('cartItems');
     const cartTotalRow = document.getElementById('cartTotalRow');
-    const cartTotalEl = document.getElementById('cartTotal');
+    const cartTotalEl  = document.getElementById('cartTotal');
     const checkoutForm = document.getElementById('checkoutForm');
-    const formStatus = document.getElementById('formStatus');
-    const checkoutBtn = document.getElementById('checkoutBtn');
+    const formStatus   = document.getElementById('formStatus');
+    const checkoutBtn  = document.getElementById('checkoutBtn');
 
-    function getCart() {
-      return JSON.parse(localStorage.getItem('cart') || '[]');
-    }
-
-    function saveCart(cart) {
-      localStorage.setItem('cart', JSON.stringify(cart));
-      updateCartCount();
-    }
+    function getCart()       { return JSON.parse(localStorage.getItem('cart') || '[]'); }
+    function saveCart(cart)  { localStorage.setItem('cart', JSON.stringify(cart)); updateCartCount(); }
 
     function updateCartCount() {
-      const cart = getCart();
-      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-      document.querySelectorAll('.nav-cart').forEach(el => {
-        el.textContent = `Cart (${count})`;
-      });
+      const count = getCart().reduce((sum, item) => sum + item.quantity, 0);
+      document.querySelectorAll('.nav-cart').forEach(el => { el.textContent = `Cart (${count})`; });
     }
 
     function renderCart() {
@@ -177,103 +235,87 @@
       cartTotalRow.style.display = '';
       cartTotalEl.textContent = `₦${total.toFixed(2)}`;
 
-      // Check minimum threshold limit rules
       if (total < MINIMUM_ORDER_AMOUNT) {
         checkoutBtn.disabled = true;
-        checkoutBtn.style.opacity = '0.5';
-        checkoutBtn.style.cursor = 'not-allowed';
-        const missingAmount = MINIMUM_ORDER_AMOUNT - total;
-        formStatus.style.color = '#ff6b6b';
-        formStatus.textContent = `Minimum order is ₦10,000. Please add ₦${missingAmount.toFixed(2)} more value to checkout.`;
+        checkoutBtn.style.opacity  = '0.5';
+        checkoutBtn.style.cursor   = 'not-allowed';
+        formStatus.style.color     = '#ff6b6b';
+        formStatus.textContent     = `Minimum order is ₦10,000. Please add ₦${(MINIMUM_ORDER_AMOUNT - total).toFixed(2)} more to checkout.`;
       } else {
-        checkoutBtn.disabled = false;
-        checkoutBtn.style.opacity = '1';
-        checkoutBtn.style.cursor = 'pointer';
-        formStatus.textContent = '';
+        checkoutBtn.disabled       = false;
+        checkoutBtn.style.opacity  = '1';
+        checkoutBtn.style.cursor   = 'pointer';
+        formStatus.textContent     = '';
       }
 
-      // Quantity adjustments
       cartItemsEl.querySelectorAll('.qty-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const i = parseInt(btn.dataset.i, 10);
-          const dir = parseInt(btn.dataset.dir, 10);
           const cart = getCart();
-          cart[i].quantity += dir;
+          cart[i].quantity += parseInt(btn.dataset.dir, 10);
           if (cart[i].quantity < 1) cart[i].quantity = 1;
           saveCart(cart);
           renderCart();
         });
       });
 
-      // Remove row item from view
       cartItemsEl.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const i = parseInt(btn.dataset.i, 10);
           const cart = getCart();
-          cart.splice(i, 1);
+          cart.splice(parseInt(btn.dataset.i, 10), 1);
           saveCart(cart);
           renderCart();
         });
       });
     }
 
-    // Submit form schema and send package to Paystack API
+    // ── Order form submit ─────────────────────────────────────────────────────
     document.getElementById('orderForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
-      const token = localStorage.getItem('token');
-      if (!token) {
-        formStatus.style.color = '#ff6b6b';
-        formStatus.textContent = 'Please login first to place an order.';
-        setTimeout(() => { window.location.href = 'login.html'; }, 2000);
-        return;
-      }
 
-           const cart = getCart();
+      const token = localStorage.getItem('token');
+      if (!token) { window.location.href = 'login.html'; return; }
+
+      const cart  = getCart();
       const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      if (total < MINIMUM_ORDER_AMOUNT) return; 
+      if (total < MINIMUM_ORDER_AMOUNT) return;
 
       formStatus.style.color = 'var(--yellow)';
       formStatus.textContent = 'Creating order request...';
-      checkoutBtn.disabled = true;
+      checkoutBtn.disabled   = true;
 
       const shippingAddress = {
         fullName: document.getElementById('fullName').value,
-        address: document.getElementById('address').value,
-        city: document.getElementById('city').value,
-        state: document.getElementById('state').value,
-        country: document.getElementById('country').value,
-        phone: document.getElementById('phone').value,
+        address:  document.getElementById('address').value,
+        city:     document.getElementById('city').value,
+        state:    document.getElementById('state').value,
+        country:  document.getElementById('country').value,
+        phone:    document.getElementById('phone').value,
       };
 
       try {
-        // 🌟 Fixed missing backticks here:
-        const res = await fetch(`${API_BASE_URL}/orders`, {
+        const res  = await fetch(`${API_BASE_URL}/orders`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ items: cart, shippingAddress })
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ items: cart, shippingAddress }),
         });
-
         const data = await res.json();
 
         if (!res.ok) {
           formStatus.style.color = '#ff6b6b';
           formStatus.textContent = data.error || 'Failed to place order.';
-          checkoutBtn.disabled = false;
+          checkoutBtn.disabled   = false;
           return;
         }
 
         localStorage.removeItem('cart');
         formStatus.style.color = 'var(--green)';
         formStatus.textContent = 'Redirecting you to Paystack...';
-        window.location.href = data.payment.authorizationUrl;
+        window.location.href   = data.payment.authorizationUrl;
       } catch (err) {
         formStatus.style.color = '#ff6b6b';
         formStatus.textContent = 'Could not reach server.';
-        checkoutBtn.disabled = false;
+        checkoutBtn.disabled   = false;
       }
     });
 
