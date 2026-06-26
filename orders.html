@@ -4,11 +4,49 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Orders — Sky Limited Stores</title>
-  <link rel="icon"    href="ChatGPT Image Jun 17, 2026, 09_10_01 PM.png"   type="image/x-icon">
+  <link rel="icon" href="ChatGPT Image Jun 17, 2026, 09_10_01 PM.png" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ── User avatar in nav ── */
+    .nav-avatar-wrap { position: relative; display: flex; align-items: center; }
+
+    .nav-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--green); color: #000;
+      font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border: 2px solid transparent;
+      transition: border-color 0.2s;
+      user-select: none; flex-shrink: 0;
+    }
+    .nav-avatar:hover { border-color: var(--green); background: transparent; color: var(--green); }
+
+    .avatar-dropdown {
+      display: none; position: absolute; top: calc(100% + 10px); right: 0;
+      background: var(--card-bg, #111); border: 1px solid var(--border, #2a2a2a);
+      border-radius: 10px; padding: 14px 16px; min-width: 210px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 999;
+    }
+    .avatar-dropdown.open { display: block; }
+    .avatar-dropdown .dd-email {
+      font-size: 12px; color: var(--text-dim, #888); word-break: break-all;
+      margin-bottom: 12px; line-height: 1.4;
+    }
+    .avatar-dropdown .dd-name {
+      font-size: 14px; font-weight: 600; color: var(--text, #fff);
+      margin-bottom: 4px;
+    }
+    .avatar-dropdown a {
+      display: block; font-size: 13px; padding: 7px 0;
+      color: var(--text, #eee); text-decoration: none; border-top: 1px solid var(--border, #2a2a2a);
+    }
+    .avatar-dropdown a:hover { color: var(--green); }
+    .avatar-dropdown .dd-logout { color: #ff6b6b !important; cursor: pointer; }
+    .avatar-dropdown .dd-logout:hover { color: #ff4444 !important; }
+  </style>
 </head>
 <body>
 
@@ -22,14 +60,23 @@
       <a href="orders.html" class="active">My Orders</a>
       <a href="cart.html" class="nav-cart">Cart (0)</a>
     </nav>
+    <!-- Avatar shown when logged in -->
+    <div class="nav-avatar-wrap" id="navAvatarWrap" style="display:none;">
+      <div class="nav-avatar" id="navAvatar" title="Account" aria-haspopup="true" aria-expanded="false"></div>
+      <div class="avatar-dropdown" id="avatarDropdown">
+        <div class="dd-name" id="ddName"></div>
+        <div class="dd-email" id="ddEmail"></div>
+        <a href="orders.html">My Orders</a>
+        <a class="dd-logout" id="ddLogout">Log out</a>
+      </div>
+    </div>
     <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
   </header>
 
   <section class="section">
     <div class="section-eyebrow">Account</div>
     <h2 class="section-title">My Orders</h2>
-    <p class="section-sub">Every order you've placed, with live status and tracking once it ships. <a href="#" id="logoutLink" style="color: var(--green); text-decoration: underline;">Log out</a></p>
-
+    <p class="section-sub">Every order you've placed, with live status and tracking once it ships.</p>
     <div id="ordersList"><p class="section-sub">Loading your orders&hellip;</p></div>
   </section>
 
@@ -46,57 +93,79 @@
   </footer>
 
   <script>
+    // ── Mobile nav toggle ──
     const navToggle = document.getElementById('navToggle');
-    const navLinks = document.getElementById('navLinks');
-    navToggle.addEventListener('click', () => {
-      navLinks.classList.toggle('open');
-    });
+    const navLinks  = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
 
-    // Update cart counter in nav based on items saved in this browser
+    // ── Cart counter ──
     (function updateCartCount() {
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const cart  = JSON.parse(localStorage.getItem('cart') || '[]');
       const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-      document.querySelectorAll('.nav-cart').forEach(el => {
-        el.textContent = `Cart (${count})`;
+      document.querySelectorAll('.nav-cart').forEach(el => el.textContent = `Cart (${count})`);
+    })();
+
+    // ── Auth guard — redirect if not logged in ──
+    const token = localStorage.getItem('token');
+    if (!token) { window.location.href = 'login.html'; }
+
+    // ── Avatar setup ──
+    (function setupAvatar() {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (!token || !user) return;
+
+      const name     = user.name || user.email || '?';
+      const initials = name.trim().split(/\s+/).map(w => w[0].toUpperCase()).slice(0, 2).join('');
+
+      const avatarWrap = document.getElementById('navAvatarWrap');
+      const avatar     = document.getElementById('navAvatar');
+      const dropdown   = document.getElementById('avatarDropdown');
+      const ddName     = document.getElementById('ddName');
+      const ddEmail    = document.getElementById('ddEmail');
+
+      avatar.textContent = initials;
+      ddName.textContent  = user.name  || '';
+      ddEmail.textContent = user.email || '';
+      avatarWrap.style.display = 'flex';
+
+      avatar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = dropdown.classList.toggle('open');
+        avatar.setAttribute('aria-expanded', open);
+      });
+      document.addEventListener('click', () => {
+        dropdown.classList.remove('open');
+        avatar.setAttribute('aria-expanded', 'false');
+      });
+
+      document.getElementById('ddLogout').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
       });
     })();
 
-    // ---- Configuration ----
-    // While testing on your own computer, the backend runs at this address.
-    // Once you deploy the backend online, change this to that URL instead.
+    // ── Configuration ──
     const API_BASE_URL = 'https://sky-limited-stores-backend.onrender.com/api';
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = 'login.html';
-    }
-
-    document.getElementById('logoutLink').addEventListener('click', (e) => {
-      e.preventDefault();
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = 'login.html';
-    });
-
-    // The stages an order moves through, in order. "cancelled" is handled separately.
     const STEPS = [
-      { key: 'pending',           label: 'Order placed' },
-      { key: 'paid',               label: 'Payment confirmed' },
-      { key: 'processing',         label: 'Forwarded to supplier' },
-      { key: 'shipped',            label: 'Tracking assigned' },
-      { key: 'in_transit',         label: 'In transit' },
-      { key: 'out_for_delivery',   label: 'Out for delivery' },
-      { key: 'delivered',          label: 'Delivered' },
+      { key: 'pending',          label: 'Order placed' },
+      { key: 'paid',              label: 'Payment confirmed' },
+      { key: 'processing',        label: 'Forwarded to supplier' },
+      { key: 'shipped',           label: 'Tracking assigned' },
+      { key: 'in_transit',        label: 'In transit' },
+      { key: 'out_for_delivery',  label: 'Out for delivery' },
+      { key: 'delivered',         label: 'Delivered' },
     ];
 
     const STATUS_LABELS = STEPS.reduce((acc, s) => { acc[s.key] = s.label; return acc; }, { cancelled: 'Cancelled' });
 
     function escapeHTML(str) {
-      return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     }
 
     function formatDate(iso) {
-      return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      return new Date(iso).toLocaleString(undefined, { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit' });
     }
 
     function renderPipeline(order) {
@@ -105,31 +174,30 @@
         let cls = 'pipeline-step';
         if (i < currentIndex) cls += ' reached';
         else if (i === currentIndex) cls += order.status === 'delivered' ? ' reached' : ' current';
-        const connector = i < STEPS.length - 1 ? `<div class="pipeline-connector ${i < currentIndex ? 'done' : ''}"></div>` : '';
+        const connector = i < STEPS.length - 1
+          ? `<div class="pipeline-connector ${i < currentIndex ? 'done' : ''}"></div>` : '';
         return `<div class="${cls}"><div class="pipeline-dot"></div><span class="pipeline-label">${s.label}</span></div>${connector}`;
       }).join('')}</div>`;
     }
 
     function renderOrder(order) {
       const ref = order._id.slice(-8).toUpperCase();
-      const itemsHTML = order.items.map(item => `
-        <div><span>${escapeHTML(item.name)} &times; ${item.quantity}</span><span>₦${(item.price * item.quantity).toFixed(2)}</span></div>
-      `).join('');
+      const itemsHTML = order.items.map(item =>
+        `<div><span>${escapeHTML(item.name)} &times; ${item.quantity}</span><span>₦${(item.price * item.quantity).toFixed(2)}</span></div>`
+      ).join('');
 
       const trackingHTML = order.trackingNumber
         ? `<div class="tracking-line">${escapeHTML(order.courier || 'Courier')} &nbsp;&middot;&nbsp; <span class="tracking-chip">${escapeHTML(order.trackingNumber)}</span></div>`
-        : (order.status === 'cancelled' ? '' : `<div class="tracking-line" style="color: var(--text-dim);">Tracking number will appear here once your order ships.</div>`);
+        : (order.status === 'cancelled' ? '' : `<div class="tracking-line" style="color:var(--text-dim);">Tracking number will appear here once your order ships.</div>`);
 
-      const bodyHTML = order.status === 'cancelled'
-        ? ''
-        : `${trackingHTML}${renderPipeline(order)}`;
+      const bodyHTML = order.status === 'cancelled' ? '' : `${trackingHTML}${renderPipeline(order)}`;
 
-      const historyHTML = order.statusHistory.slice().reverse().map(h => `
-        <div class="activity-row">
+      const historyHTML = order.statusHistory.slice().reverse().map(h =>
+        `<div class="activity-row">
           <span class="activity-time">${formatDate(h.timestamp)}</span>
           <span class="activity-note">${escapeHTML(h.note || STATUS_LABELS[h.status] || h.status)}</span>
-        </div>
-      `).join('');
+        </div>`
+      ).join('');
 
       return `
         <div class="order-card">
@@ -146,14 +214,13 @@
             <summary>Activity log</summary>
             ${historyHTML || '<p class="section-sub" style="margin:10px 0 0;">No activity recorded yet.</p>'}
           </details>
-        </div>
-      `;
+        </div>`;
     }
 
     async function loadOrders() {
       const listEl = document.getElementById('ordersList');
       try {
-        const res = await fetch(`${API_BASE_URL}/orders/my`, {
+        const res  = await fetch(`${API_BASE_URL}/orders/my`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -162,12 +229,10 @@
           listEl.innerHTML = `<p class="section-sub">${data.error || 'Could not load your orders.'}</p>`;
           return;
         }
-
         if (!data.orders.length) {
-          listEl.innerHTML = '<p class="section-sub">You haven\'t placed any orders yet. <a href="index.html#shop" style="color: var(--green);">Browse products</a> to get started.</p>';
+          listEl.innerHTML = '<p class="section-sub">You haven\'t placed any orders yet. <a href="index.html#shop" style="color:var(--green);">Browse products</a> to get started.</p>';
           return;
         }
-
         listEl.innerHTML = data.orders.map(renderOrder).join('');
       } catch (err) {
         listEl.innerHTML = '<p class="section-sub">Could not reach the server. Is the backend running?</p>';
