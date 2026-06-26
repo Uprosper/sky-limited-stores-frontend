@@ -4,11 +4,49 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order Confirmation — Sky Limited Stores</title>
-  <link rel="icon"    href="ChatGPT Image Jun 17, 2026, 09_10_01 PM.png"   type="image/x-icon">
+  <link rel="icon" href="ChatGPT Image Jun 17, 2026, 09_10_01 PM.png" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ── User avatar in nav ── */
+    .nav-avatar-wrap { position: relative; display: flex; align-items: center; }
+
+    .nav-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--green); color: #000;
+      font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border: 2px solid transparent;
+      transition: border-color 0.2s;
+      user-select: none; flex-shrink: 0;
+    }
+    .nav-avatar:hover { border-color: var(--green); background: transparent; color: var(--green); }
+
+    .avatar-dropdown {
+      display: none; position: absolute; top: calc(100% + 10px); right: 0;
+      background: var(--card-bg, #111); border: 1px solid var(--border, #2a2a2a);
+      border-radius: 10px; padding: 14px 16px; min-width: 210px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 999;
+    }
+    .avatar-dropdown.open { display: block; }
+    .avatar-dropdown .dd-email {
+      font-size: 12px; color: var(--text-dim, #888); word-break: break-all;
+      margin-bottom: 12px; line-height: 1.4;
+    }
+    .avatar-dropdown .dd-name {
+      font-size: 14px; font-weight: 600; color: var(--text, #fff);
+      margin-bottom: 4px;
+    }
+    .avatar-dropdown a {
+      display: block; font-size: 13px; padding: 7px 0;
+      color: var(--text, #eee); text-decoration: none; border-top: 1px solid var(--border, #2a2a2a);
+    }
+    .avatar-dropdown a:hover { color: var(--green); }
+    .avatar-dropdown .dd-logout { color: #ff6b6b !important; cursor: pointer; }
+    .avatar-dropdown .dd-logout:hover { color: #ff4444 !important; }
+  </style>
 </head>
 <body>
 
@@ -19,9 +57,19 @@
       <a href="index.html">Home</a>
       <a href="index.html#shop">Shop</a>
       <a href="contact.html">Contact</a>
-      <a href="login.html">Login</a>
+      <a href="login.html" id="navLoginLink">Login</a>
       <a href="cart.html" class="nav-cart">Cart (0)</a>
     </nav>
+    <!-- Avatar shown when logged in -->
+    <div class="nav-avatar-wrap" id="navAvatarWrap" style="display:none;">
+      <div class="nav-avatar" id="navAvatar" title="Account" aria-haspopup="true" aria-expanded="false"></div>
+      <div class="avatar-dropdown" id="avatarDropdown">
+        <div class="dd-name" id="ddName"></div>
+        <div class="dd-email" id="ddEmail"></div>
+        <a href="orders.html">My Orders</a>
+        <a class="dd-logout" id="ddLogout">Log out</a>
+      </div>
+    </div>
     <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
   </header>
 
@@ -45,80 +93,111 @@
   </footer>
 
   <script>
+    // ── Mobile nav toggle ──
     const navToggle = document.getElementById('navToggle');
-    const navLinks = document.getElementById('navLinks');
-    navToggle.addEventListener('click', () => {
-      navLinks.classList.toggle('open');
-    });
+    const navLinks  = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
 
-    // Show "My Orders" instead of "Login" once the customer is signed in
-    (function setupAuthNav() {
-      if (!localStorage.getItem('token')) return;
-      document.querySelectorAll('a[href="login.html"]').forEach(link => {
-        link.textContent = 'My Orders';
-        link.setAttribute('href', 'orders.html');
-      });
-    })();
-
-    // Update cart counter in nav based on items saved in this browser
+    // ── Cart counter ──
     (function updateCartCount() {
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const cart  = JSON.parse(localStorage.getItem('cart') || '[]');
       const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-      document.querySelectorAll('.nav-cart').forEach(el => {
-        el.textContent = `Cart (${count})`;
-      });
+      document.querySelectorAll('.nav-cart').forEach(el => el.textContent = `Cart (${count})`);
     })();
 
-    // ---- Configuration ----
-    // Replace with your deployed backend URL, e.g. https://sky-backend.onrender.com/api
-    const API_BASE_URL = 'https://sky-limited-stores-backend.onrender.com/api';
-
-    const titleEl = document.querySelector('#statusCard .auth-title');
-    const messageEl = document.getElementById('statusMessage');
-
-    async function verifyPayment() {
-      const params = new URLSearchParams(window.location.search);
-      const reference = params.get('reference') || params.get('trxref');
+    // ── Avatar setup ──
+    (function setupAvatar() {
       const token = localStorage.getItem('token');
+      const user  = JSON.parse(localStorage.getItem('user') || 'null');
 
-      if (!reference) {
-        titleEl.textContent = 'No order found';
-        messageEl.textContent = "We couldn't find a payment reference in this link.";
+      const loginLink = document.getElementById('navLoginLink');
+
+      if (!token || !user) {
+        // Keep "Login" link visible
         return;
       }
 
+      // Hide Login link
+      if (loginLink) loginLink.style.display = 'none';
+
+      const name     = user.name || user.email || '?';
+      const initials = name.trim().split(/\s+/).map(w => w[0].toUpperCase()).slice(0, 2).join('');
+
+      const avatarWrap = document.getElementById('navAvatarWrap');
+      const avatar     = document.getElementById('navAvatar');
+      const dropdown   = document.getElementById('avatarDropdown');
+      const ddName     = document.getElementById('ddName');
+      const ddEmail    = document.getElementById('ddEmail');
+
+      avatar.textContent = initials;
+      ddName.textContent  = user.name  || '';
+      ddEmail.textContent = user.email || '';
+      avatarWrap.style.display = 'flex';
+
+      avatar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = dropdown.classList.toggle('open');
+        avatar.setAttribute('aria-expanded', open);
+      });
+      document.addEventListener('click', () => {
+        dropdown.classList.remove('open');
+        avatar.setAttribute('aria-expanded', 'false');
+      });
+
+      document.getElementById('ddLogout').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+      });
+    })();
+
+    // ── Configuration ──
+    const API_BASE_URL = 'https://sky-limited-stores-backend.onrender.com/api';
+
+    const titleEl   = document.querySelector('#statusCard .auth-title');
+    const messageEl = document.getElementById('statusMessage');
+
+    async function verifyPayment() {
+      const params    = new URLSearchParams(window.location.search);
+      const reference = params.get('reference') || params.get('trxref');
+      const token     = localStorage.getItem('token');
+
+      if (!reference) {
+        titleEl.textContent   = 'No order found';
+        messageEl.textContent = "We couldn't find a payment reference in this link.";
+        return;
+      }
       if (!token) {
-        titleEl.textContent = 'Please log in';
+        titleEl.textContent   = 'Please log in';
         messageEl.textContent = 'Log in to view your order confirmation.';
         return;
       }
 
       try {
-        const res = await fetch(`${API_BASE_URL}/orders/verify/${reference}`, {
+        const res  = await fetch(`${API_BASE_URL}/orders/verify/${reference}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
 
         if (!res.ok) {
-          titleEl.textContent = 'Something went wrong';
+          titleEl.textContent   = 'Something went wrong';
           messageEl.textContent = data.error || 'Could not verify your payment.';
           return;
         }
 
         const order = data.order;
-
         if (order.paymentStatus === 'paid') {
-          titleEl.textContent = 'Payment successful!';
-          messageEl.innerHTML = `Thanks for your order. Order total: ₦${order.totalAmount.toFixed(2)}. A confirmation has been recorded. <br><br><a href="orders.html" style="color: var(--green); text-decoration: underline;">Track your order &rarr;</a>`;
+          titleEl.textContent   = 'Payment successful!';
+          messageEl.innerHTML   = `Thanks for your order. Order total: ₦${order.totalAmount.toFixed(2)}. A confirmation has been recorded.<br><br><a href="orders.html" style="color:var(--green);text-decoration:underline;">Track your order &rarr;</a>`;
         } else if (order.paymentStatus === 'failed') {
-          titleEl.textContent = 'Payment failed';
+          titleEl.textContent   = 'Payment failed';
           messageEl.textContent = 'Your payment did not go through. Please try again from your cart.';
         } else {
-          titleEl.textContent = 'Payment pending';
+          titleEl.textContent   = 'Payment pending';
           messageEl.textContent = "We're still waiting for confirmation. This page will not auto-refresh — please check back shortly.";
         }
       } catch (err) {
-        titleEl.textContent = 'Connection error';
+        titleEl.textContent   = 'Connection error';
         messageEl.textContent = 'Could not reach the server to verify your payment.';
       }
     }
