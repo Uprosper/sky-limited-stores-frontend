@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contact — Sky Limited Stores</title>
-  <link rel="icon"    href="ChatGPT Image Jun 17, 2026, 09_10_01 PM.png"   type="image/x-icon">
+  <link rel="icon" href="ChatGPT Image Jun 17, 2026, 09_10_01 PM.png" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -19,9 +19,18 @@
       <a href="index.html">Home</a>
       <a href="index.html#shop">Shop</a>
       <a href="contact.html" class="active">Contact</a>
-      <a href="login.html">Login</a>
+      <a href="login.html" id="navLoginLink">Login</a>
       <a href="cart.html" class="nav-cart">Cart (0)</a>
     </nav>
+    <div class="nav-avatar-wrap" id="navAvatarWrap" style="display:none;">
+      <div class="nav-avatar" id="navAvatar" title="Account" aria-haspopup="true" aria-expanded="false"></div>
+      <div class="avatar-dropdown" id="avatarDropdown">
+        <div class="dd-name" id="ddName"></div>
+        <div class="dd-email" id="ddEmail"></div>
+        <a href="orders.html">My Orders</a>
+        <a class="dd-logout" id="ddLogout">Log out</a>
+      </div>
+    </div>
     <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
   </header>
 
@@ -31,7 +40,6 @@
     <p class="section-sub">Questions about an order, a product, or anything else? Send a message or reach us directly below.</p>
 
     <div class="contact-grid">
-
       <!-- Contact form -->
       <div class="form-wrap" style="margin:0;">
         <form id="contactForm">
@@ -52,21 +60,15 @@
         </form>
       </div>
 
-      <!-- Dummy contact details -->
+      <!-- Contact details -->
       <div class="contact-details">
         <h3>Customer Support</h3>
         <p><a href="mailto:support@skylimitedstores.com">support@skylimitedstores.com</a></p>
-
         <h3>Phone</h3>
         <p><a href="tel:+15551234567">+1 (555) 123-4567</a></p>
         <p>Mon–Fri, 9am–6pm (GMT)</p>
-
         <h3>Address</h3>
-        <p>Sky Limited Stores<br>
-        123 Commerce Avenue<br>
-        Suite 400<br>
-        Lagos, Nigeria</p>
-
+        <p>Sky Limited Stores<br>123 Commerce Avenue<br>Suite 400<br>Lagos, Nigeria</p>
         <h3>Follow Us</h3>
         <p>
           <a href="#">Instagram</a> &nbsp;·&nbsp;
@@ -74,7 +76,6 @@
           <a href="#">TikTok</a>
         </p>
       </div>
-
     </div>
   </section>
 
@@ -91,57 +92,78 @@
   </footer>
 
   <script>
-    const navToggle = document.getElementById('navToggle');
-    const navLinks = document.getElementById('navLinks');
-    navToggle.addEventListener('click', () => {
-      navLinks.classList.toggle('open');
+    // ── Mobile nav toggle ──
+    document.getElementById('navToggle').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open');
     });
 
-    // Show "My Orders" instead of "Login" once the customer is signed in
-    (function setupAuthNav() {
-      if (!localStorage.getItem('token')) return;
-      document.querySelectorAll('a[href="login.html"]').forEach(link => {
-        link.textContent = 'My Orders';
-        link.setAttribute('href', 'orders.html');
-      });
-    })();
-
-    // Update cart counter in nav based on items saved in this browser
+    // ── Cart counter ──
     (function updateCartCount() {
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const cart  = JSON.parse(localStorage.getItem('cart') || '[]');
       const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-      document.querySelectorAll('.nav-cart').forEach(el => {
-        el.textContent = `Cart (${count})`;
+      document.querySelectorAll('.nav-cart').forEach(el => el.textContent = `Cart (${count})`);
+    })();
+
+    // ── Avatar setup ──
+    (function setupAvatar() {
+      const token = localStorage.getItem('token');
+      const user  = JSON.parse(localStorage.getItem('user') || 'null');
+      const loginLink = document.getElementById('navLoginLink');
+      if (!token || !user) return;
+
+      if (loginLink) loginLink.style.display = 'none';
+
+      const name     = user.name || user.email || '?';
+      const initials = name.trim().split(/\s+/).map(w => w[0].toUpperCase()).slice(0, 2).join('');
+
+      const avatarWrap = document.getElementById('navAvatarWrap');
+      const avatar     = document.getElementById('navAvatar');
+      const dropdown   = document.getElementById('avatarDropdown');
+
+      avatar.textContent = initials;
+      document.getElementById('ddName').textContent  = user.name  || '';
+      document.getElementById('ddEmail').textContent = user.email || '';
+      avatarWrap.style.display = 'flex';
+
+      avatar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = dropdown.classList.toggle('open');
+        avatar.setAttribute('aria-expanded', open);
+      });
+      document.addEventListener('click', () => {
+        dropdown.classList.remove('open');
+        avatar.setAttribute('aria-expanded', 'false');
+      });
+      document.getElementById('ddLogout').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
       });
     })();
 
-    // ---- Configuration ----
-    // While testing on your own computer, the backend runs at this address.
-    // Once you deploy the backend online, change this to that URL instead.
+    // ── Config ──
     const API_BASE_URL = 'https://sky-limited-stores-backend.onrender.com/api';
 
-    const form = document.getElementById('contactForm');
-    const statusEl = document.getElementById('formStatus');
+    const form      = document.getElementById('contactForm');
+    const statusEl  = document.getElementById('formStatus');
     const submitBtn = form.querySelector('button[type="submit"]');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
+      const name    = document.getElementById('name').value.trim();
+      const email   = document.getElementById('email').value.trim();
       const message = document.getElementById('message').value.trim();
 
-      statusEl.textContent = '';
-      submitBtn.disabled = true;
+      statusEl.textContent  = '';
+      submitBtn.disabled    = true;
       submitBtn.textContent = 'Sending...';
 
       try {
-        const res = await fetch(`${API_BASE_URL}/contact`, {
+        const res  = await fetch(`${API_BASE_URL}/contact`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, message }),
         });
-
         const data = await res.json();
 
         if (!res.ok) {
@@ -157,7 +179,7 @@
         statusEl.textContent = 'Could not reach the server. Is the backend running?';
         statusEl.style.color = '#ff6b6b';
       } finally {
-        submitBtn.disabled = false;
+        submitBtn.disabled    = false;
         submitBtn.textContent = 'Send Message';
       }
     });
