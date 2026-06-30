@@ -269,8 +269,33 @@
 
         if (!res.ok) {
           formStatus.style.color = '#ff6b6b';
-          formStatus.textContent = data.error || 'Failed to place order.';
-          checkoutBtn.disabled   = false;
+
+          // Special handling: unverified email — offer a resend link inline
+          if (res.status === 403 && data.error && data.error.toLowerCase().includes('verify')) {
+            formStatus.innerHTML = `${data.error} <a href="#" id="resendVerifyLink" style="color:var(--green); text-decoration:underline;">Resend verification email</a>`;
+            const resendLink = document.getElementById('resendVerifyLink');
+            resendLink.addEventListener('click', async (ev) => {
+              ev.preventDefault();
+              formStatus.style.color = 'var(--yellow)';
+              formStatus.textContent = 'Sending verification email...';
+              try {
+                const r = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+                  method: 'POST',
+                  headers: { 'Authorization': `Bearer ${token}` },
+                });
+                const d = await r.json();
+                formStatus.style.color = r.ok ? 'var(--green)' : '#ff6b6b';
+                formStatus.textContent = d.message || d.error || 'Something went wrong.';
+              } catch (err) {
+                formStatus.style.color = '#ff6b6b';
+                formStatus.textContent = 'Could not reach the server.';
+              }
+            });
+          } else {
+            formStatus.textContent = data.error || 'Failed to place order.';
+          }
+
+          checkoutBtn.disabled = false;
           return;
         }
 
