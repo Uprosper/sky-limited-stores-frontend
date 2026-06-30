@@ -128,10 +128,16 @@
     <div class="product-grid" id="productGrid">
       <p class="section-sub">Loading products&hellip;</p>
     </div>
+
+    <div id="nextSectionWrap" style="display:none; text-align:center; margin-top:36px;">
+      <button id="nextSectionBtn" class="filter-pill" style="cursor:pointer;">
+        Continue &darr;
+      </button>
+    </div>
   </section>
 
   <!-- Footer -->
-  <footer class="site-footer">
+  <footer class="site-footer" id="siteFooter">
     <img src="images/logo.svg" alt="Sky Limited Stores" class="logo">
     <div class="footer-links">
       <a href="index.html">Home</a>
@@ -211,9 +217,28 @@
 
     const genericIcon = `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>`;
 
+    // ── Figure out how many product cards fit per row, so we know
+    //     when the grid has rendered roughly 10 rows worth of cards ──
+    function getColumnsPerRow() {
+      const probe = productGrid.querySelector('.product-card');
+      if (!probe) return 1;
+      const gridWidth = productGrid.clientWidth;
+      const cardWidth = probe.getBoundingClientRect().width;
+      if (!cardWidth) return 1;
+      return Math.max(1, Math.round(gridWidth / cardWidth));
+    }
+
+    function toggleNextSectionButton(productCount) {
+      const wrap = document.getElementById('nextSectionWrap');
+      const cols = getColumnsPerRow();
+      const tenRowsWorth = cols * 10;
+      wrap.style.display = productCount > tenRowsWorth ? 'block' : 'none';
+    }
+
     function renderProducts(products) {
       if (!products.length) {
         productGrid.innerHTML = '<p class="section-sub">No products found in this category.</p>';
+        document.getElementById('nextSectionWrap').style.display = 'none';
         return;
       }
 
@@ -273,6 +298,9 @@
           setTimeout(() => { btn.textContent = 'Add'; }, 1000);
         });
       });
+
+      // After cards are in the DOM, decide whether to show the "Continue" button
+      toggleNextSectionButton(products.length);
     }
 
     // ── FIX 3: build filter pills from real categories returned by the API ──
@@ -292,6 +320,11 @@
         });
       });
     }
+
+    // ── "Continue" button: smooth-scrolls down to the footer/next section ──
+    document.getElementById('nextSectionBtn').addEventListener('click', () => {
+      document.getElementById('siteFooter').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
 
     async function loadProducts() {
       try {
