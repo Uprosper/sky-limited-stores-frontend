@@ -116,12 +116,12 @@
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
 
-        statusEl.textContent = 'Account created! Redirecting...';
+        statusEl.textContent = 'Account created! Check your email to verify before placing orders. Redirecting...';
         statusEl.style.color = 'var(--green)';
 
         setTimeout(() => {
           window.location.href = 'index.html';
-        }, 1000);
+        }, 1800);
       } catch (err) {
         statusEl.textContent = 'Could not reach the server. Is the backend running?';
         statusEl.style.color = '#ff6b6b';
