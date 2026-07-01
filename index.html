@@ -59,6 +59,26 @@
     }
     #loginToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     #loginToast a { color: var(--green, #00ff9d); text-decoration: underline; margin-left: 8px; }
+
+    /* ── Pagination controls ── */
+    #paginationWrap {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 36px;
+    }
+    #paginationWrap button:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    #pageIndicator {
+      font-family: var(--font-display);
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
@@ -129,10 +149,10 @@
       <p class="section-sub">Loading products&hellip;</p>
     </div>
 
-    <div id="nextSectionWrap" style="display:none; text-align:center; margin-top:36px;">
-      <button id="nextSectionBtn" class="filter-pill" style="cursor:pointer;">
-        Next &rarr;
-      </button>
+    <div id="paginationWrap">
+      <button id="prevPageBtn" class="filter-pill" style="cursor:pointer;">&larr; Previous</button>
+      <span id="pageIndicator"></span>
+      <button id="nextPageBtn" class="filter-pill" style="cursor:pointer;">Next &rarr;</button>
     </div>
   </section>
 
@@ -228,12 +248,17 @@
 
       if (!products.length) {
         productGrid.innerHTML = '<p class="section-sub">No products found in this category.</p>';
-        document.getElementById('nextSectionWrap').style.display = 'none';
+        document.getElementById('paginationWrap').style.display = 'none';
         return;
       }
 
-      const end = currentPage * PRODUCTS_PER_PAGE;
-      const visibleProducts = products.slice(0, end);
+      const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE);
+      // clamp in case a filter change makes the old page number too high
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
+      const end   = start + PRODUCTS_PER_PAGE;
+      const visibleProducts = products.slice(start, end);
 
       productGrid.innerHTML = visibleProducts.map(p => {
         // ── use originalPrice (matches seed.js field name) ──
@@ -307,10 +332,17 @@
         });
       });
 
-      // ── Show "Next" button only if there are more products beyond what's visible ──
-      const wrap = document.getElementById('nextSectionWrap');
-      if (end < products.length) {
-        wrap.style.display = 'block';
+      // ── Pagination controls: show only if more than one page ──
+      const wrap        = document.getElementById('paginationWrap');
+      const prevBtn      = document.getElementById('prevPageBtn');
+      const nextBtn       = document.getElementById('nextPageBtn');
+      const pageIndicator = document.getElementById('pageIndicator');
+
+      if (totalPages > 1) {
+        wrap.style.display = 'flex';
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+        pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
       } else {
         wrap.style.display = 'none';
       }
@@ -334,11 +366,21 @@
       });
     }
 
-    // ── "Next" button: loads the next 30 products and scrolls back to the top of the grid ──
-    document.getElementById('nextSectionBtn').addEventListener('click', () => {
+    // ── Previous / Next: change page and scroll to top of the product grid ──
+    function scrollToGridTop() {
+      productGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    document.getElementById('nextPageBtn').addEventListener('click', () => {
       currentPage++;
       renderProducts(activeFilteredProducts, false);
-      document.getElementById('shop').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      scrollToGridTop();
+    });
+
+    document.getElementById('prevPageBtn').addEventListener('click', () => {
+      currentPage--;
+      renderProducts(activeFilteredProducts, false);
+      scrollToGridTop();
     });
 
     async function loadProducts() {
