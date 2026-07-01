@@ -157,6 +157,11 @@
     const API_BASE_URL = 'https://sky-limited-stores-backend.onrender.com/api';
     const BACKEND_URL  = 'https://sky-limited-stores-backend.onrender.com';
 
+    let allProducts   = [];
+let currentPage    = 1;
+const PRODUCTS_PER_PAGE = 30;
+let activeFilteredProducts = [];
+
     // ── Avatar setup ──
     (function setupAvatar() {
       const token = localStorage.getItem('token');
