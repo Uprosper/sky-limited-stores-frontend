@@ -689,7 +689,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; scroll-behavior: auto !important; }
  }
-}
+
 
 /* ===========================
    Cart item — no hover lift
