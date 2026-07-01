@@ -291,6 +291,11 @@
                 formStatus.textContent = 'Could not reach the server.';
               }
             });
+          } else if (data.invalidProductId) {
+            const cleanedCart = getCart().filter(item => item.productId !== data.invalidProductId);
+            saveCart(cleanedCart);
+            renderCart();
+            formStatus.textContent = data.error || 'One item was removed because it is no longer available. Please try again.';
           } else {
             formStatus.textContent = data.error || 'Failed to place order.';
           }
